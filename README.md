@@ -138,4 +138,4 @@ The amount of time, in milliseconds, to wait until displaying a warning to the u
 user is active, this warning timer will be reset.  the warning disappears, and the timer is reset. The warning
 will re-appear after the same amount of time after reset.
 
-Default: `900000` (15 minutes)
+Default: `760000` (13 minutes)
