@@ -8,11 +8,10 @@ The user has two options: Log out now or stay connected. If they choose to log o
 to your site's log out page. If they choose to stay connected, a keep-alive URL is requested in the
 background, the warning is hidden, and the timer resets.
 
-This project is the successor to
-[jquery-sessionTimeout](https://github.com/travishorn/jquery-sessionTimeout). I built this new
-version to remove the dependency on jQuery and jQuery UI.
-
-![Animated demonstration](samples/demo.gif)
+This project is an adaptation of the project at https://github.com/travishorn/session-timeout.
+This adds features such as user interrupts, function callback for keepalive, logout, renew functionalities instead of URLs.
+This project also adds a count down timer.
+Keepalive frequency can be controlled with a keepAliveFrequency property.
 
 ## Installation
 
@@ -21,7 +20,7 @@ version to remove the dependency on jQuery and jQuery UI.
 Include the script on your page via UNPKG.
 
 ```html
-<script src="https://unpkg.com/@travishorn/session-timeout"></script>
+<script src="https://unpkg.com/santonica/session-timeout"></script>
 ```
 
 ### Method 2: Download
@@ -39,13 +38,13 @@ Include it on your page.
 Install via npm.
 
 ```
-> npm install @travishorn/session-timeout
+> npm install santonica/session-timeout
 ```
 
 Include it in your scripts.
 
 ```javascript
-import sessionTimeout from '@travishorn/session-timeout';
+import sessionTimeout from 'santonica/session-timeout';
 ```
 
 ## Usage
@@ -59,22 +58,24 @@ sessionTimeout();
 Provide options as an object.
 
 ```javascript
-sessionTimeout({
-  warnAfter: 60000,
-  message: 'Are you still there?',
-});
+ sessionTimeout({
+                keepAliveMethod: "GET",
+                keepAliveFrequency: 300000, //Every 5 minutes, keep server alive
+                keepAliveFn: getUserInfo,
+                stayConnectedBtnText: "Renew",//TODO I18N
+                logOutBtnText: "Sign out", //TODO I18N
+                logOutFn: self.logout,
+                message: "Your session will expire in ## seconds",//TODO I18N
+                sessionExpiredMessage: "Your session expired. You will be automatically redirected to sign in page.",//TODO I18N
+                showExpiredMessageFor: 2000,
+                timeOutAfter: 90000, //15 minutes
+                timeOutFn: self.logout,
+                warnAfter: 760000 //13 minutes
+            });
 ```
 
 ## Options
 
-### appendTimestamp
-
-If `true`, appends the a timestamp parameter to the end of the keep-alive URL with each request.
-This can prevent caching issues by guaranteeing the URL is unique.
-
-Default: `false`
-
-Example URL: `/keep-alive?time=1551203965297`
 
 ### keepAliveMethod
 
@@ -82,30 +83,36 @@ The HTTP method to use when making the keep-alive request.
 
 Default: `POST`
 
-### keepAliveUrl
+### keepAliveFrequency
 
-When the user clicks the "Stay connected" button, this URL is requested in the background to keep
-their session alive.
+This is the frequency at which a server ping is made using the keepAliveFn provided.
 
-Default: `/keep-alive`
+Default: 300000 or 5 minutes
+
+### keepAliveFn
+
+This callback should have logic to call a server resource so server session is maintained.
+
+Default: Does nothing if a callback was not provided.
 
 ### logOutBtnText
 
 The text on the log out button.
 
-Default: `Log out now`
+Default: `Logout`
 
-### logOutUrl
+### logOutFn
 
-When the user clicks the "Log out now" button, their browser is directed to this URL.
+When the user clicks the "Log out" button, this callback is invoked.
 
-Default: `/log-out`
+Default: Clears all timers by default. Supply a callback to perform a logout action.
 
 ### message
 
 The message to display when warning the user of inactivity.
 
-Default: `Your session is about to expire.`
+Default: `Your session will expire in ## seconds.`
+Note: The '##' is required if you want to see the count down.
 
 ### stayConnectedBtnText
 
@@ -115,23 +122,20 @@ Default: `Stay connected`
 
 ### timeOutAfter
 
-The amount of time, in milliseconds, to wait until automatically timing out the user and redirecting
-their client to the time-out URL. You will usually want to set this to the same amount of time your
-server keeps sessions alive. This timer gets reset if the users clicks the "stay connected" button
-on the warning dialog.
+The amount of time, in milliseconds, to wait until automatically timing out the user and invoking the timeoutFn. 
 
-Default: `1200000` (20 minutes)
+Default: `900000` (15 minutes). This will make the application PCI DSS 3.2 compliant.
 
-### timeOutUrl
+### timeOutFn
 
-Once the time out period has elapsed, the user's browser will be directed to this URL.
+Once the time out period has elapsed, this callback will be invoked.
 
-Default: `/timed-out`
+Default: Clears all timers by default. Supply a callback to perform a time out action.
 
 ### warnAfter
 
 The amount of time, in milliseconds, to wait until displaying a warning to the user. If the
-user clicks the "stay connected" button, the warning disappears, and the timer is reset. The warning
+user is active, this warning timer will be reset.  the warning disappears, and the timer is reset. The warning
 will re-appear after the same amount of time after reset.
 
 Default: `900000` (15 minutes)
